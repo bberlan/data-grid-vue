@@ -24,13 +24,15 @@
     >
       <!-- lot tab content... -->
       <!-- <TabContent tab="lot" :id="id" edit-type="fullRow" /> -->
-      <DataGrid />
+      <DataGrid tab="Cars" :api-url="metadata.apiUrl" edit-type="fullRow" />
     </div>
   </div>
 </template>
 
 <script setup>
 import DataGrid from '@/components/DataGrid.vue'
+import { useMetaData } from '@/stores/metadata'
+const metadata = useMetaData()
 defineProps({
   id: String
 })

@@ -1,8 +1,8 @@
 import { useMasterDataStore } from '@/stores/masterdata'
 
-const masterData = useMasterDataStore()
-
 export function useCellEditorParams(columnDefs) {
+  const masterData = useMasterDataStore()
+
   const setCellEditorParams = async () => {
     columnDefs.value.forEach(
       (colDef) => (colDef.cellEditorParams &&= getCellEditorParams(colDef.cellEditorParams))

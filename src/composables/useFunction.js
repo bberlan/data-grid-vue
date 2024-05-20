@@ -1,8 +1,8 @@
-import { ref, isRef, unref, watchEffect, reactive, computed } from 'vue'
+import { ref, unref, reactive, computed } from 'vue'
 import { useFunctionParams } from './useFunctionParams'
 
-export async function useFunction(params, props, grid, store, items, actions) {
-  const svcUrl = import.meta.env.VITE_APP_BLL_SERVICE_URL
+export async function useFunction(params, props, defs, grid, store, items, actions) {
+  const apiUrl = import.meta.env.VITE_API_URL
   // const store = useStore()
   const user = computed(() => store.getters.getUser)
   // const getClientId = computed(() => store.getters.getClientId)
@@ -50,7 +50,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
   }
 
   const addItems = async () => {
-    await fetch([svcUrl, props.tab, 'defaults', props.id].filter(Boolean).join('/'))
+    await fetch([apiUrl, props.tab, 'defaults', props.id].filter(Boolean).join('/'))
       .then((res) => res.json())
       .then((dat) => {
         setEntryOnAdd(true)
@@ -74,18 +74,6 @@ export async function useFunction(params, props, grid, store, items, actions) {
     columnTypes.entryOnAdd.editable = editable
   }
 
-  const setColumnDefs = async () => {
-    gridApi.setColumnDefs(columnDefs)
-  }
-
-  const remColumnDefs = async () => {
-    gridApi.setColumnDefs([])
-  }
-
-  const resetColumnDefs = async () => {
-    remColumnDefs().then(setColumnDefs)
-  }
-
   const editItems = (callback) => {
     return new Promise((resolve, reject) => {
       try {
@@ -106,6 +94,34 @@ export async function useFunction(params, props, grid, store, items, actions) {
     })
   }
 
+  const deleteItems = (params) => {
+    return new Promise((resolve, reject) => {
+      try {
+        console.log('deleteItems')
+        // if (!gridApi.getSelectedNodes().length) reject()
+
+        const obj = params(gridApi.getSelectedNodes())
+        // console.log('deleteItems.obj:', obj)
+        if (obj.continue) {
+          if (confirm('Do you want to delete selected rows?')) {
+            const res = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
+            Promise.all(
+              res.remove.map(async (node) => {
+                await fetchData({
+                  url: [apiUrl, props.tab, node.data.id].join('/'),
+                  method: 'DELETE',
+                  data: node.data
+                })
+              })
+            ).then(resolve, reject)
+          } else reject()
+        } else reject(obj.message)
+      } catch (error) {
+        reject('error: ' + error)
+      }
+    })
+  }
+
   const submitItems = () => {
     return new Promise((resolve, reject) => {
       try {
@@ -117,7 +133,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
               selectedNodes.map(
                 async (node) =>
                   await fetchData({
-                    url: [svcUrl, props.tab, user.value.id].join('/'),
+                    url: [apiUrl, props.tab, user.value.id].join('/'),
                     method: 'POST',
                     data: node.data
                   })
@@ -137,7 +153,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
               items.map(
                 async (item) =>
                   await fetchData({
-                    url: [svcUrl, props.tab, item.id, user.value.id].join('/'),
+                    url: [apiUrl, props.tab, item.id, user.value.id].join('/'),
                     method: 'PUT',
                     data: item
                   })
@@ -199,7 +215,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
 
   // const startEditingCell = (colId) => {
   //   console.log('startEditingCell.colId:', colId)
-  //   setCurrEditingColId(colId)
+  //   store.setCurrEditingColId(colId)
   //   gridApi.setFocusedCell(selectedNodes[0].rowIndex, colId)
   //   gridApi.startEditingCell({
   //     rowIndex: selectedNodes[0].rowIndex,
@@ -246,11 +262,11 @@ export async function useFunction(params, props, grid, store, items, actions) {
     await getRowData(id).then(() => gridApi.refreshCells())
   }
 
-  const doRefreshTab = async () => {
-    console.log('doRefreshTab:', props.tab)
-    // await getLookupData()
-    await getRowData().then(() => gridApi.refreshCells())
-  }
+  // const doRefreshTab = async () => {
+  //   console.log('doRefreshTab:', props.tab)
+  //   // await getLookupData()
+  //   await getRowData().then(() => gridApi.refreshCells())
+  // }
 
   const archiveItems = (callback) => {
     return new Promise((resolve, reject) => {
@@ -266,7 +282,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
               const res = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
               Promise.all(
                 res.remove.map(async (node) => {
-                  await fetch([svcUrl, props.tab, 'archive', node.data.id].join('/'), {
+                  await fetch([apiUrl, props.tab, 'archive', node.data.id].join('/'), {
                     method: 'PUT'
                   })
                 })
@@ -282,7 +298,7 @@ export async function useFunction(params, props, grid, store, items, actions) {
 
   const getRowData = async (id) => {
     console.log('tabContent.getRowData.id', id)
-    await fetch([svcUrl, props.tab, props.route, id].filter(Boolean).join('/'))
+    await fetch([apiUrl, props.tab, props.route, id].filter(Boolean).join('/'))
       .then((res) => (res.ok ? res.json() : null))
       // .then(res => res.json())
       .then((dat) => dat && gridApi.setRowData(dat))
