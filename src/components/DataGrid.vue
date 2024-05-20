@@ -1,86 +1,83 @@
 <template>
-  <ToolBar :tab="toolTab ?? tab" :tool="tool" @action="doFunction" />
-  <AgGridVue class="ag-theme-alpine" style="height: 500px" :gridOptions="gridOptions" />
+  <ToolBar :tab="tab ?? tab" :tool="tool" @action="doFunction" />
+  <AgGridVue class="ag-theme-quartz" style="height: 500px" :grid-options="gridOptions" />
 </template>
 
 <script setup>
 import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-quartz.css'
-import { reactive, ref, onMounted, toRef, computed, watch } from 'vue'
+import { ref, onMounted, toRef, watch } from 'vue'
 import { AgGridVue } from 'ag-grid-vue3'
-import { useStore } from 'vuex'
+// import { useStore } from 'vuex'
 import { dataAction } from '../enums/DataAction'
 import ToolBar from './ToolBar.vue'
 import { useFunction } from '@/composables/useFunction'
-import { useUDF } from '@/composables/useFunction.udf'
+import { useUDF } from '@/composables/useFunction.ext'
 import { useValueGetter } from '@/composables/useValueGetter'
 import { useValueFormatter } from '@/composables/useValueFormatter'
 // import { useValueFormatterExt } from "gui-use-extensions"
 import { useValueSetter } from '@/composables/useValueSetter'
 import { useCellEditorParams } from '@/composables/useCellEditorParams'
+import { useDataGridStore } from '@/stores/datagrid'
 
 //#region variables
 const props = defineProps({
   tab: String,
   route: String,
   id: [String, Number],
-  toolTab: String,
-  columnTab: String,
-  editType: String,
-  modals: Array,
-  modal: Boolean
+  apiUrl: String,
+  // toolTab: String,
+  // columnTab: String,
+  editType: String
+  // modals: Array,
+  // modal: Boolean
 })
-const store = useStore()
-const guiSvcUrl = import.meta.env.VITE_APP_GUI_SERVICE_URL
-const sysSvcUrl = import.meta.env.VITE_APP_SYS_SERVICE_URL
-// const user = computed(() => store.getters.getUser)
-const getDataAction = computed(() => store.getters.getDataAction)
-const getCurrColId = computed(() => store.getters.getCurrColId)
-const getCurrEditingColId = computed(() => store.getters.getCurrEditingColId)
-const setDataAction = (action) => store.commit('setDataAction', action)
-const setCurrColId = (key) => store.commit('setCurrColId', key)
-const columnTypes = reactive({
+const store = useDataGridStore()
+// const apiUrl = import.meta.env.VITE_API_URL
+const columnTypes = ref({
   entryOnAdd: { editable: false }
 })
-const selectedNodes = reactive([])
-const itemsToUpdate = reactive([])
+const selectedNodes = ref([])
+const itemsToUpdate = ref([])
 const tool = ref(null)
 const optionModal = ref(null)
 const standardModal = ref(null)
 const gridApi = ref(null)
 const columnApi = ref(null)
-const columnDefs = reactive({ value: [] })
+// const columnDefs = reactive({ value: [] })
+const columnDefs = ref(null)
 
-onMounted(() => {
-  if (props.tab || props.columnTab) {
-    getColumnDefs2(props.columnTab ?? props.tab)
-  }
-})
+// onMounted(() => {
+//   if (props.tab) {
+//     updateColumnDefs(props.tab)
+//   }
+// })
 
 watch(
   () => props.id,
   (id) => {
     console.log('TabContent.watch.props.id:', props.id)
-    id && doRefresh(id).then(() => setDataAction(dataAction.read))
+    id && doRefresh(id).then(() => store.setDataAction(dataAction.read))
   }
 )
 
-watch([() => props.tab, () => props.columnTab], ([tab, tab2]) => {
-  getColumnDefs2(tab2 ?? tab)
-})
+watch(
+  () => props.tab,
+  (tab) => {
+    updateColumnDefs(tab)
+  }
+)
 
 const doFunction = async (params) => {
   console.log('doFunction')
   params.udf
-    ? await useUDF(params, props, { api: gridApi, columnApi }, store, itemsToUpdate, dataAction, {
-        standard: standardModal,
-        option: optionModal
-      })
+    ? await useUDF(params, props, { api: gridApi, columnApi }, store, itemsToUpdate, dataAction)
         .then((val) => setTool(params.tool) && console.log('doFunction.val:', val.value))
         .catch((reason) => reason.value && alert(reason.value))
     : await useFunction(
         params,
         props,
+        columnDefs,
         { api: gridApi, columnApi },
         store,
         itemsToUpdate,
@@ -95,43 +92,51 @@ const setTool = (val) => {
   return tool.value == val
 }
 
-const getColumnDefs2 = (tab) => {
-  getColumnDefs(tab)
-    .then(() => useValueGetter(toRef(columnDefs, 'value'), store))
-    .then(() => useValueFormatter(toRef(columnDefs, 'value'), store))
-    .then(() => useValueSetter(toRef(columnDefs, 'value'), store))
-    .then(() => useCellEditorParams(toRef(columnDefs, 'value'), store))
-    .then(resetColumnDefs)
-  doRefresh(props.id).then(() => setDataAction(dataAction.read))
+const updateColumnDefs = () => {
+  getColumnDefs()
+    //   .then(() => useValueGetter(toRef(columnDefs, 'value'), store))
+    //   .then(() => useValueFormatter(toRef(columnDefs, 'value'), store))
+    //   .then(() => useValueSetter(toRef(columnDefs, 'value'), store))
+    //   .then(() => useCellEditorParams(toRef(columnDefs, 'value'), store))
+    .then(setColumnDefs)
+  doRefresh(props.id).then(() => store.setDataAction(dataAction.read))
 }
 
-const getColumnDefs = async (tab) => {
-  await fetch([guiSvcUrl, 'ColumnDef', tab].join('/'))
+const getColumnDefs = async () => {
+  await fetch([props.apiUrl, 'columndefs', props.tab].join('/'))
+    // await fetchData({
+    //   url: [props.apiUrl, 'columndefs', props.tab].join('/')
+    // })
     .then((res) => res.json())
-    .then((dat) => dat.forEach((i) => columnDefs.value.push(i)))
+    .then((dat) => (columnDefs.value = dat))
 }
 
 const setColumnDefs = async () => {
-  gridApi.value.setColumnDefs(columnDefs.value)
+  gridApi.value.setGridOption('columnDefs', columnDefs.value)
 }
 
-const remColumnDefs = async () => {
-  gridApi.value.setColumnDefs([])
-}
+// const remColumnDefs = async () => {
+//   // gridApi.value.setColumnDefs([])
+//   // gridApi.value.setGridOption('columnDefs', [])
+// }
 
-const resetColumnDefs = async () => {
-  remColumnDefs().then(setColumnDefs)
-}
+// const resetColumnDefs = async () => {
+//   remColumnDefs().then(setColumnDefs)
+// }
 
-const getRowData = async (id) => {
-  console.log('tabContent.getRowData.id', id)
-  await fetch([sysSvcUrl, props.tab, props.route, id].filter(Boolean).join('/'))
+const getRowData = async () => {
+  console.log('tabContent.getRowData.id')
+  await fetch([props.apiUrl, props.tab, props.route, props.id].filter(Boolean).join('/'))
+    // await fetchData({
+    //   url: [props.apiUrl, props.tab, props.route, props.id].filter(Boolean).join('/')
+    // })
     .then((res) => (res.ok ? res.json() : null))
-    .then((dat) => dat && gridApi.value.setRowData(dat))
+    .then((dat) => dat && gridApi.value.setGridOption('rowData', dat))
+  // .then((dat) => dat && console.log('getRowData.fetchData:', dat))
 }
 
 const resetSelectedNodes = () => {
-  selectedNodes.forEach((node) => {
+  selectedNodes.value.forEach((node) => {
     node.setSelected(true)
   })
 }
@@ -140,10 +145,25 @@ const doRefresh = async (id) => {
   await getRowData(id).then(() => gridApi.value.refreshCells())
 }
 
-const onCellValueChanged = (params) => {
-  console.log('onCellValueChanged.getDataAction:', getDataAction.value)
+// const fetchData = async (params) => {
+//   return await fetch(params.url, {
+//     method: params.method ?? 'GET',
+//     mode: 'cors',
+//     cache: 'default',
+//     credentials: 'same-origin',
+//     headers: {
+//       'Content-Type': 'application/json'
+//     },
+//     redirect: 'follow',
+//     referrerPolicy: 'no-referrer'
+//     // body: params.data && JSON.stringify(params.data)
+//   })
+// }
 
-  switch (getDataAction.value) {
+const onCellValueChanged = (params) => {
+  console.log('onCellValueChanged.store.dataAction:', store.dataAction)
+
+  switch (store.dataAction) {
     case dataAction.add:
       resetSelectedNodes()
       break
@@ -153,9 +173,9 @@ const onCellValueChanged = (params) => {
       // let index = await itemsToUpdate.findIndex((item) => item.id === data.id)
       // console.log('onCellValueChanged.foundIndex:', index)
       // index < 0 ? itemsToUpdate.push(data) : itemsToUpdate.splice(index, 1, data);
-      if (itemsToUpdate.findIndex((item) => item.id === params.node.data.id) < 0)
-        itemsToUpdate.push(params.node.data)
-      console.log('onCellValueChanged.itemsToUpdate:', itemsToUpdate)
+      if (itemsToUpdate.value.findIndex((item) => item.id === params.node.data.id) < 0)
+        itemsToUpdate.value.push(params.node.data)
+      console.log('onCellValueChanged.itemsToUpdate:', itemsToUpdate.value)
       break
     default:
       break
@@ -163,23 +183,23 @@ const onCellValueChanged = (params) => {
 }
 
 const onCellFocused = (params) => {
-  params.column && setCurrColId(params.column.colId)
+  params.column && store.setCurrColId(params.column.colId)
 }
 
 const onRowClicked = (params) => {
   console.log('onRowClicked.nodeId:', params.node.id)
-  if (!props.editType && getCurrEditingColId.value !== getCurrColId.value) return
+  if (!props.editType && store.currEditingColId !== store.currColId) return
   const isCurrentRowEditing = params.api.getEditingCells().some((cell) => {
     return cell.rowIndex === params.rowIndex
   })
   if (
-    [dataAction.add, dataAction.edit].includes(getDataAction.value) &&
+    [dataAction.add, dataAction.edit].includes(store.dataAction) &&
     params.node.isSelected() &&
     !isCurrentRowEditing
   ) {
     params.api.startEditingCell({
       rowIndex: params.rowIndex,
-      colKey: getCurrColId.value
+      colKey: store.currColId
     })
   }
 }
@@ -187,12 +207,13 @@ const onRowClicked = (params) => {
 const onGridReady = (params) => {
   gridApi.value = params.api
   columnApi.value = params.columnApi
+  updateColumnDefs()
 }
 
 const gridOptions = {
   // PROPERTIES
-  columnTypes: columnTypes,
-  // columnDefs: columnDefs,
+  columnTypes: columnTypes.value,
+  // columnDefs: columnDefs.value,
   // components: components,
   // components: { 'dateFormatter': dateFormatter },
   rowData: [],
