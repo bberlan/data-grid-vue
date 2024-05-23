@@ -1,42 +1,31 @@
-// import { ref, isRef, unref, watchEffect } from 'vue'
+import { ref, watchEffect, toValue } from 'vue'
 
 export function useFunctionParams(name) {
-  const getFunctionParams = () => {
-    switch (name) {
-      case 'archiveInvoiceParams':
-        return archiveInvoiceParams
-      case 'archiveCaseParams':
-        return archiveCaseParams
-      default:
-        return defaultFunctionParams
-    }
-  }
+  console.log('useFunctionParams')
+  const callback = ref(null)
 
-  const defaultFunctionParams = (params) => {
+  watchEffect(() => {
+    console.log('useFunctionParams.watchEffect.name:', toValue(name))
+    switch (toValue(name)) {
+      case 'archiveInvoiceParams':
+        // callback.value = archiveInvoiceParams
+        break
+      case 'archiveCaseParams':
+        // callback.value = archiveCaseParams
+        break
+      default:
+        callback.value = defaultFunctionParams
+        break
+    }
+  })
+
+  function defaultFunctionParams(params) {
+    console.log('defaultFunctionParams')
     return {
       continue: params.length,
       message: null
     }
   }
 
-  const archiveInvoiceParams = () => {
-    return {
-      continue: 0,
-      message: null
-    }
-  }
-
-  const archiveCaseParams = () => {
-    return {
-      continue: 0,
-      message: null
-    }
-  }
-
-  // return isRef(name) ? watchEffect(doFunctionParams) : doFunctionParams
-  // return name == 'archiveInvoiceParams' ? archiveInvoiceParams
-  //     : name == 'archiveCaseParams' ? archiveCaseParams
-  //         : defaultFunctionParams;
-
-  getFunctionParams()
+  return callback.value
 }

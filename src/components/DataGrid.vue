@@ -17,7 +17,7 @@ const props = defineProps({
   tab: String,
   route: String,
   id: [String, Number],
-  apiUrl: String,
+  url: String,
   editType: String
 })
 const store = useDataGridStore()
@@ -27,8 +27,7 @@ const columnTypes = ref({
 const selectedNodes = ref([])
 const itemsToUpdate = ref([])
 const tool = ref(null)
-const gridApi = ref(null)
-const columnApi = ref(null)
+const api = ref(null)
 const columnDefs = ref(null)
 
 watch(
@@ -41,25 +40,25 @@ watch(
 const doFunction = async (params) => {
   console.log('doFunction')
   params.udf
-    ? await useUDF(params, props, { api: gridApi, columnApi }, store, itemsToUpdate, dataAction)
-        .then((val) => setTool(params.tool) && console.log('doFunction.val:', val.value))
-        .catch((reason) => reason.value && alert(reason.value))
-    : await useFunction(
-        params,
-        props,
-        columnDefs,
-        { api: gridApi, columnApi },
-        store,
-        itemsToUpdate,
-        dataAction
-      )
-        .then((val) => setTool(params.tool) && console.log('doFunction.val:', val.value))
-        .catch((reason) => reason.value && alert(reason.value))
+    ? await useUDF(toRef(params), props, api, store, itemsToUpdate, dataAction)
+        .then(
+          (val) =>
+            (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
+        )
+        .catch((reason) => reason && alert(reason.value))
+    : await useFunction({ params, props, api, store, itemsToUpdate, dataAction })
+        .then(
+          (val) =>
+            (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
+        )
+        // .then((val) => console.log('doFunction.val:', val.value))
+        .catch((reason) => reason && alert(reason.value))
 }
 
 const setTool = (val) => {
+  console.log('setTool.val:', val)
   tool.value = val
-  return tool.value == val
+  return tool.value === val
 }
 
 const updateColumnDefs = () => {
@@ -74,21 +73,19 @@ const updateColumnDefs = () => {
 }
 
 const getColumnDefs = async () => {
-  await fetch([props.apiUrl, 'columndefs', props.tab].join('/'))
+  await fetch([props.url, 'columndefs', props.tab].join('/'))
     .then((res) => res.json())
     .then((dat) => (columnDefs.value = dat))
 }
 
 const setColumnDefs = async () => {
-  gridApi.value.setGridOption('columnDefs', columnDefs.value)
+  api.value.setGridOption('columnDefs', columnDefs.value)
 }
 
 const getRowData = async () => {
-  await fetch(
-    [props.apiUrl, 'transacts', props.tab, props.route, props.id].filter(Boolean).join('/')
-  )
+  await fetch([props.url, 'transacts', props.tab, props.route, props.id].filter(Boolean).join('/'))
     .then((res) => (res.ok ? res.json() : []))
-    .then((dat) => dat && gridApi.value.setGridOption('rowData', dat))
+    .then((dat) => dat && api.value.setGridOption('rowData', dat))
 }
 
 const resetSelectedNodes = () => {
@@ -98,7 +95,7 @@ const resetSelectedNodes = () => {
 }
 
 const doRefresh = async () => {
-  await getRowData().then(() => gridApi.value.refreshCells())
+  await getRowData().then(() => api.value.refreshCells())
 }
 
 const onCellValueChanged = (params) => {
@@ -146,8 +143,7 @@ const onRowClicked = (params) => {
 }
 
 const onGridReady = (params) => {
-  gridApi.value = params.api
-  columnApi.value = params.columnApi
+  api.value = params.api
   updateColumnDefs()
 }
 
@@ -179,6 +175,6 @@ const gridOptions = {
 </script>
 
 <template>
-  <ToolBar :tab :tool @action="doFunction" />
+  <ToolBar :tab :tool @action="doFunction" :url />
   <AgGridVue class="ag-theme-quartz" style="height: 500px" :grid-options="gridOptions" />
 </template>

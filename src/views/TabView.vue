@@ -1,7 +1,7 @@
 <script setup>
 import DataGrid from '@/components/DataGrid.vue'
-import { useEnv } from '@/stores/env'
-const env = useEnv()
+import { useEnvStore } from '@/stores/env'
+const env = useEnvStore()
 defineProps({
   tab: String
 })
@@ -33,7 +33,7 @@ defineProps({
     >
       <!-- lot tab content... -->
       <!-- <TabContent tab="lot" :id="id" edit-type="fullRow" /> -->
-      <DataGrid :tab :api-url="env.apiUrl" edit-type="fullRow" />
+      <DataGrid :tab :url="env.apiUrl" edit-type="fullRow" />
     </div>
   </div>
 </template>

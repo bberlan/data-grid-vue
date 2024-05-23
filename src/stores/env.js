@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-export const useEnv = defineStore('env', () => {
+export const useEnvStore = defineStore('env', () => {
   const apiUrl = ref(import.meta.env.VITE_API_URL)
 
   return { apiUrl }
