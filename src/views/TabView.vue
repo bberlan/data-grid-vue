@@ -1,3 +1,12 @@
+<script setup>
+import DataGrid from '@/components/DataGrid.vue'
+import { useEnvStore } from '@/stores/env'
+const env = useEnvStore()
+defineProps({
+  tab: String
+})
+</script>
+
 <template>
   <nav>
     <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -11,7 +20,7 @@
         aria-controls="nav-lot"
         aria-selected="true"
       >
-        Cars
+        {{ tab }}
       </button>
     </div>
   </nav>
@@ -24,16 +33,7 @@
     >
       <!-- lot tab content... -->
       <!-- <TabContent tab="lot" :id="id" edit-type="fullRow" /> -->
-      <DataGrid tab="Cars" :api-url="metadata.apiUrl" edit-type="fullRow" />
+      <DataGrid :tab :url="env.apiUrl" edit-type="fullRow" />
     </div>
   </div>
 </template>
-
-<script setup>
-import DataGrid from '@/components/DataGrid.vue'
-import { useMetaData } from '@/stores/metadata'
-const metadata = useMetaData()
-defineProps({
-  id: String
-})
-</script>
