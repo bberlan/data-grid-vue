@@ -1,6 +1,6 @@
 <script setup>
 const samples = ['Cars', 'Persons', 'Countries']
-const settings = ['ColumnDefs', 'ToolbarDefs']
+// const settings = ['ColumnDefs', 'ToolbarDefs']
 </script>
 
 <template>
@@ -28,7 +28,7 @@ const settings = ['ColumnDefs', 'ToolbarDefs']
           </ul>
         </div>
       </li>
-      <li class="mb-1">
+      <!-- <li class="mb-1">
         <button
           class="btn btn-toggle align-items-center rounded collapsed"
           data-bs-toggle="collapse"
@@ -49,7 +49,7 @@ const settings = ['ColumnDefs', 'ToolbarDefs']
             </li>
           </ul>
         </div>
-      </li>
+      </li> -->
     </ul>
     <hr />
   </div>

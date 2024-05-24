@@ -5,13 +5,13 @@ import { useFetch } from '@/composables/useFetch'
 const apiUrl = import.meta.env.VITE_API_URL
 
 export const useDataGridStore = defineStore('datagrid', (tab) => {
-  const dataAction = ref(null)
+  const dataMode = ref(null)
   const currColId = ref(null)
   const currEditingColId = ref(null)
   const { data: columndefs } = useFetch([apiUrl, 'columndefs', tab])
 
-  function setDataAction(action) {
-    dataAction.value = action
+  function setDataMode(mode) {
+    dataMode.value = mode
   }
 
   function setCurrColId(id) {
@@ -24,10 +24,10 @@ export const useDataGridStore = defineStore('datagrid', (tab) => {
 
   return {
     columndefs,
-    dataAction,
+    dataMode,
     currColId,
     currEditingColId,
-    setDataAction,
+    setDataMode,
     setCurrColId,
     setCurrEditingColId
   }
