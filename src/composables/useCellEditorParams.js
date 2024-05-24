@@ -20,7 +20,7 @@ export function useCellEditorParams(columnDefs) {
 
   const countryCellEditorParams = () => {
     return {
-      values: masterData.countries
+      values: masterData.countries.map((c) => c.codeName)
     }
   }
 

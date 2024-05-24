@@ -3,7 +3,6 @@
   <select class="form-select" v-model="selected">
     <option v-for="value in values" :value="value" :key="value">
       {{ formatValue(value) }}
-      <!-- {{value}}             -->
     </option>
   </select>
 </template>
@@ -23,16 +22,12 @@ export default {
     /* Component Editor Lifecycle methods */
     // the final value to send to the grid, on completion of editing
     const getValue = () => {
-      // this simple editor doubles any value entered into the input
-      // console.log('getValue:', selected.value)
       return selected.value
     }
 
     // Gets called once before editing starts, to give editor a chance to
     // cancel the editing before it even starts.
     const isCancelBeforeStart = () => {
-      // console.log(`isCancelBeforeStart.${props.params.column.getColId()}.value:`, value.value)
-      // return props.params.value === null;
       return false
     }
 
@@ -41,12 +36,7 @@ export default {
     const isCancelAfterEnd = () => {
       // our editor will reject any value greater than 1000
       // return value.value > 1000;
-      // console.log(`isCancelAfterEnd.${props.params.column.getColId()}.value`, value.value)
-      // console.log('isCancelAfterEnd.selected:', selected.value)
-      // console.log('isCancelAfterEnd.selected.equat:', selected.value === '00000000-0000-0000-0000-000000000000')
       return selected.value === null
-      // return selected.value === null || selected.value === '00000000-0000-0000-0000-000000000000';
-      // return true;
     }
 
     return {
@@ -59,7 +49,6 @@ export default {
     }
   },
   mounted() {
-    // console.log('SelectCellEditor.mounted.formatValue', this.formatValue)
     // focus on the input field once editing starts
     // nextTick(() => this.$refs.input.focus());
   }

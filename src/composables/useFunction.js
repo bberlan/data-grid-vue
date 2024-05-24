@@ -1,8 +1,8 @@
 import { ref, reactive } from 'vue'
 import { useFunctionParams } from './useFunctionParams'
+import { dataMode } from '../enums/DataMode'
 
 export async function useFunction(params) {
-  const selectedNodes = ref([])
   const columnTypes = ref({
     entryOnAdd: { editable: false }
   })
@@ -12,8 +12,8 @@ export async function useFunction(params) {
     props,
     api: gridApi,
     store,
-    itemsToUpdate: items,
-    dataAction: actions
+    selectedNodes,
+    itemsToUpdate: items
   } = reactive(params)
 
   const doFunction = async () => {
@@ -50,27 +50,9 @@ export async function useFunction(params) {
     }
   }
 
-  const addItems2 = async () => {
-    await fetch([props.url, props.tab, 'defaults', props.id].filter(Boolean).join('/'))
-      .then((res) => res.json())
-      .then((dat) => {
-        setEntryOnAdd(true)
-          // .then(resetColumnDefs)
-          .then(() => addTransact({ add: [dat] }))
-          .then(() => {
-            if (getSelectedNodes() && startEditingCells()) {
-              console.log('after startEditingCells')
-              setCheckboxSelectionVisible(false)
-              store.setDataAction(actions.add)
-            }
-          })
-      })
-  }
-
   const addItems = () => {
     return new Promise((resolve, reject) => {
       try {
-        // fetch([props.url, props.tab, 'defaults', props.id].filter(Boolean).join('/'))
         transactData({ mode: 'defaults' })
           .then((res) => res.json())
           .then((dat) => {
@@ -78,10 +60,10 @@ export async function useFunction(params) {
               // .then(resetColumnDefs)
               .then(() => addTransact({ add: [dat] }))
               .then(() => {
-                if (getSelectedNodes() && startEditingCells()) {
-                  console.log('after startEditingCells')
+                if (getSelectedNodes() && startEditingCells(dataMode.add)) {
+                  console.log('after.startEditingCells.selectedNodes.data:', selectedNodes)
                   setCheckboxSelectionVisible(false)
-                  store.setDataAction(actions.add)
+                  store.setDataMode(dataMode.add)
                 }
               })
           })
@@ -108,13 +90,11 @@ export async function useFunction(params) {
         const obj = callback(gridApi.getSelectedNodes())
         console.log('useFunction.editItems.obj:', obj)
         if (obj.continue) {
-          if (getSelectedNodes() && startEditingCells()) {
+          if (getSelectedNodes() && startEditingCells(dataMode.edit)) {
             setCheckboxSelectionVisible(false)
-            store.setDataAction(actions.edit)
+            store.setDataMode(dataMode.edit)
             resolve('doFunction.editItems.successful')
-          } else {
-            reject()
-          }
+          } else reject('No editable cells.')
         } else reject(obj.message)
       } catch (error) {
         reject(error)
@@ -126,21 +106,14 @@ export async function useFunction(params) {
     return new Promise((resolve, reject) => {
       try {
         console.log('deleteItems')
-        // if (!gridApi.getSelectedNodes().length) reject()
-
         const obj = params(gridApi.getSelectedNodes())
         // console.log('deleteItems.obj:', obj)
         if (obj.continue) {
           if (confirm('Do you want to delete selected rows?')) {
-            const res = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
+            const nodes = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
             Promise.all(
-              res.remove.map(async (node) => {
-                // await fetchData({
-                //   url: [props.url, props.tab, node.data.id].join('/'),
-                //   method: 'DELETE',
-                //   data: node.data
-                // })
-                await transactData({ menthod: 'DELETE', id: node.data.id })
+              nodes.remove.map(async (node) => {
+                await transactData({ method: 'DELETE', id: node.id })
               })
             ).then(resolve, reject)
           } else reject()
@@ -155,18 +128,12 @@ export async function useFunction(params) {
     return new Promise((resolve, reject) => {
       try {
         console.log('submitItems')
-        switch (store.dataAction) {
-          case actions.add:
-            console.log('submitItems.add')
+        switch (store.dataMode) {
+          case dataMode.add:
+            console.log('submitItems.add.selectedNodes:', selectedNodes)
             Promise.all(
-              selectedNodes.value.map(
-                async (node) =>
-                  // await fetchData({
-                  //   url: [props.url, 'transacts', props.tab].join('/'),
-                  //   method: 'POST',
-                  //   data: node.data
-                  // })
-                  await transactData({ method: 'POST', data: node.data })
+              selectedNodes.map(
+                async (node) => await transactData({ method: 'POST', data: node.data })
               )
             )
               .then((res) => {
@@ -175,25 +142,16 @@ export async function useFunction(params) {
               })
               .catch((err) => reject(err))
             break
-          case actions.edit:
-            // update data using api
-            console.log('submitItems.edit.itemsToUpdate.lenth:', items.length)
-            console.log('submitItems.edit.itemsToUpdate:', items)
+          case dataMode.edit:
             Promise.all(
               items.map(
-                async (item) =>
-                  // await fetchData({
-                  //   url: [props.url, props.tab, item.id].join('/'),
-                  //   method: 'PUT',
-                  //   data: item
-                  // })
-                  await transactData({ method: 'PATCH', data: item, id: item.id })
+                async (item) => await transactData({ method: 'PATCH', data: item, id: item.id })
               )
             )
               .then((res) => {
                 console.log('Promise.all.response:', res)
                 clearItemsToUpdate()
-                store.setDataAction(actions.read)
+                store.setDataMode(dataMode.read)
                 resolve('submit edited items successful.')
               })
               .catch((err) => reject(err))
@@ -220,28 +178,30 @@ export async function useFunction(params) {
   }
 
   const doCancelItems = async () => {
-    store.dataAction === actions.edit && clearItemsToUpdate()
+    store.dataMode === dataMode.edit && clearItemsToUpdate()
     if (clearSelectedNodes() && setCheckboxSelectionVisible(true)) {
-      store.setDataAction(actions.read)
+      store.setDataMode(dataMode.read)
       await doRefresh(props.id)
     }
   }
 
-  const startEditingCells = () => {
-    console.log('useFunc:startEditingCells')
-    // console.log('startEditingCells.rowIndex:', selectedNodes[0].rowIndex)
-    // console.log('startEditingCells.colKey:', columnApi.getAllColumns().find(col => col.getColDef().editable).colId)
-    // console.log('startEditingCells.getAllColumns:', columnApi.getAllColumns())
+  const startEditingCells = (mode) => {
+    console.log('useFunc:startEditingCells.mode', mode)
+    if (!gridApi.getAllGridColumns().some((col) => col.getColDef().editable)) return false
     gridApi.setFocusedCell(
-      selectedNodes.value[0].rowIndex,
+      mode === dataMode.edit
+        ? selectedNodes[0].rowIndex
+        : selectedNodes[selectedNodes.length - 1].rowIndex,
       gridApi.getAllGridColumns().find((col) => col.getColDef().editable).colId
     )
     gridApi.startEditingCell({
-      rowIndex: selectedNodes.value[0].rowIndex,
+      rowIndex:
+        mode === dataMode.edit
+          ? selectedNodes[0].rowIndex
+          : selectedNodes[selectedNodes.length - 1].rowIndex,
       colKey: gridApi.getAllGridColumns().find((col) => col.getColDef().editable).colId
     })
-    // return gridApi.getEditingCells().length > 0
-    return gridApi.getAllGridColumns().some((col) => col.getColDef().editable)
+    return gridApi.getEditingCells().length > 0
   }
 
   // const startEditingCell = (colId) => {
@@ -258,9 +218,9 @@ export async function useFunction(params) {
   const getSelectedNodes = () => {
     console.log('useFunc:getSelectedNodes')
     gridApi.getSelectedNodes().forEach((node) => {
-      selectedNodes.value.push(node)
+      if (!selectedNodes.some((node2) => node2.id === node.id)) selectedNodes.push(node)
     })
-    return selectedNodes.value.length > 0
+    return selectedNodes.length > 0
   }
 
   const setCheckboxSelectionVisible = (show) => {
@@ -330,39 +290,23 @@ export async function useFunction(params) {
 
   const getRowData = async () => {
     console.log('tabContent.getRowData')
-    // await fetch([props.url, props.tab, props.route].filter(Boolean).join('/'))
     await transactData()
       .then((res) => (res.ok ? res.json() : null))
       .then((dat) => dat && gridApi.setGridOption('rowData', dat))
   }
 
   const clearSelectedNodes = () => {
-    selectedNodes.value.forEach((node) => {
+    selectedNodes.forEach((node) => {
       node.setSelected(false)
     })
-    if (!selectedNodes.value.some((node) => node.isSelected()))
-      selectedNodes.value.splice(0, selectedNodes.value.length)
-    return selectedNodes.value.length === 0
+    if (!selectedNodes.some((node) => node.isSelected()))
+      selectedNodes.splice(0, selectedNodes.length)
+    return selectedNodes.length === 0
   }
 
   const clearItemsToUpdate = () => {
     items.length = 0
     return items.length === 0
-  }
-
-  const fetchData = async (params) => {
-    return await fetch(params.url, {
-      method: params.method,
-      mode: 'cors',
-      cache: 'default',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      redirect: 'follow',
-      referrerPolicy: 'no-referrer',
-      body: JSON.stringify(params.data)
-    })
   }
 
   const transactData = async (params) => {

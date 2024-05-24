@@ -3,8 +3,7 @@ import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-quartz.css'
 import { ref, toRef, watch } from 'vue'
 import { AgGridVue } from 'ag-grid-vue3'
-import { dataAction } from '../enums/DataAction'
-import ToolBar from './ToolBar.vue'
+import { dataMode } from '../enums/DataMode'
 import { useFunction } from '@/composables/useFunction'
 import { useUDF } from '@/composables/useFunction.ext'
 import { useValueGetter } from '@/composables/useValueGetter'
@@ -12,6 +11,7 @@ import { useValueFormatter } from '@/composables/useValueFormatter'
 import { useValueSetter } from '@/composables/useValueSetter'
 import { useCellEditorParams } from '@/composables/useCellEditorParams'
 import { useDataGridStore } from '@/stores/datagrid'
+import ToolBar from './ToolBar.vue'
 
 const props = defineProps({
   tab: String,
@@ -40,19 +40,19 @@ watch(
 const doFunction = async (params) => {
   console.log('doFunction')
   params.udf
-    ? await useUDF(toRef(params), props, api, store, itemsToUpdate, dataAction)
+    ? await useUDF(toRef(params), props, api, store, itemsToUpdate, dataMode)
         .then(
           (val) =>
             (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
         )
         .catch((reason) => reason && alert(reason.value))
-    : await useFunction({ params, props, api, store, itemsToUpdate, dataAction })
+    : await useFunction({ params, props, api, store, selectedNodes, itemsToUpdate })
         .then(
           (val) =>
             (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
         )
         // .then((val) => console.log('doFunction.val:', val.value))
-        .catch((reason) => reason && alert(reason.value))
+        .catch((reason) => reason && alert(reason))
 }
 
 const setTool = (val) => {
@@ -69,7 +69,7 @@ const updateColumnDefs = () => {
     .then(() => useCellEditorParams(toRef(columnDefs, 'value'), store))
     .then(setColumnDefs)
     .then(doRefresh)
-    .then(() => store.setDataAction(dataAction.read))
+    .then(() => store.setDataMode(dataMode.read))
 }
 
 const getColumnDefs = async () => {
@@ -99,18 +99,20 @@ const doRefresh = async () => {
 }
 
 const onCellValueChanged = (params) => {
-  console.log('onCellValueChanged.store.dataAction:', store.dataAction)
+  console.log('onCellValueChanged.store.dataMode:', store.dataMode)
 
-  switch (store.dataAction) {
-    case dataAction.add:
+  switch (store.dataMode) {
+    case dataMode.add:
+      // nawawala yung selected nodes on cell value changed.
       resetSelectedNodes()
       break
-    case dataAction.edit:
+    case dataMode.edit:
       resetSelectedNodes()
       // let data = await params.node.data
       // let index = await itemsToUpdate.findIndex((item) => item.id === data.id)
       // console.log('onCellValueChanged.foundIndex:', index)
       // index < 0 ? itemsToUpdate.push(data) : itemsToUpdate.splice(index, 1, data);
+      // push edited item cells only for update.
       if (itemsToUpdate.value.findIndex((item) => item.id === params.node.data.id) < 0)
         itemsToUpdate.value.push(params.node.data)
       console.log('onCellValueChanged.itemsToUpdate:', itemsToUpdate.value)
@@ -131,7 +133,7 @@ const onRowClicked = (params) => {
     return cell.rowIndex === params.rowIndex
   })
   if (
-    [dataAction.add, dataAction.edit].includes(store.dataAction) &&
+    [dataMode.add, dataMode.edit].includes(store.dataMode) &&
     params.node.isSelected() &&
     !isCurrentRowEditing
   ) {
@@ -178,3 +180,5 @@ const gridOptions = {
   <ToolBar :tab :tool @action="doFunction" :url />
   <AgGridVue class="ag-theme-quartz" style="height: 500px" :grid-options="gridOptions" />
 </template>
+
+<style></style>
