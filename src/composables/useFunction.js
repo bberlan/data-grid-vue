@@ -115,7 +115,7 @@ export async function useFunction(params) {
               nodes.remove.map(async (node) => {
                 await transactData({ method: 'DELETE', id: node.id })
               })
-            ).then(resolve, reject)
+            ).then(() => resolve('Items deleted.'), reject)
           } else reject()
         } else reject(obj.message)
       } catch (error) {
