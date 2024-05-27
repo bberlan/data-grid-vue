@@ -7,11 +7,11 @@ export function useFunctionParams(name) {
   watchEffect(() => {
     console.log('useFunctionParams.watchEffect.name:', toValue(name))
     switch (toValue(name)) {
-      case 'archiveInvoiceParams':
-        // callback.value = archiveInvoiceParams
+      case 'sampleFuncParams':
+        // callback.value = sampleFuncParams
         break
-      case 'archiveCaseParams':
-        // callback.value = archiveCaseParams
+      case 'sampleFuncParams2':
+        // callback.value = sampleFuncParams2
         break
       default:
         callback.value = defaultFunctionParams

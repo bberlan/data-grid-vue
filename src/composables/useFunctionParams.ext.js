@@ -1,24 +1,28 @@
+import { ref, watchEffect, toValue } from 'vue'
+
 export function useUDFParams(name) {
-  const doUDFParams = () => {
-    switch (name) {
-      case 'test':
+  console.log('useFunctionParams')
+  const callback = ref(null)
+
+  watchEffect(() => {
+    console.log('useFunctionParams.watchEffect.name:', toValue(name))
+    switch (toValue(name)) {
+      case 'sampleFuncParams':
+        // callback.value = sampleFuncParams
         break
       default:
+        callback.value = defaultFunctionParams
         break
     }
-  }
+  })
 
-  const defaultParams = (params) => {
+  function defaultFunctionParams(params) {
+    console.log('defaultFunctionParams')
     return {
       continue: params.length,
       message: null
     }
   }
 
-  switch (name) {
-    case 'testParams':
-      return defaultParams
-    default:
-      return defaultParams
-  }
+  return callback.value
 }

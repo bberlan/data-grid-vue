@@ -42,7 +42,7 @@ watch(
 const doFunction = async (params) => {
   console.log('doFunction')
   params.udf
-    ? await useUDF(toRef(params), props, api, store, itemsToUpdate, dataMode)
+    ? await useUDF({ params, props, api, store, selectedNodes, itemsToUpdate })
         .then(
           (val) =>
             (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)

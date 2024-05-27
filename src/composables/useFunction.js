@@ -39,11 +39,9 @@ export async function useFunction(params) {
       case 'refreshItems':
         ret.value = await refreshItems()
         break
-      case 'archiveItems':
-        ret.value = await archiveItems(useFunctionParams(funcParams.callback))
-        break
-      case 'generic':
-        break
+      // case 'archiveItems':
+      //   ret.value = await archiveItems(useFunctionParams(funcParams.callback))
+      //   break
       default:
         ret.value = await Promise.resolve()
         break
@@ -260,33 +258,33 @@ export async function useFunction(params) {
   //   await getRowData().then(() => gridApi.refreshCells())
   // }
 
-  const archiveItems = (callback) => {
-    return new Promise((resolve, reject) => {
-      ;(async () => {
-        try {
-          console.log('archiveItems')
-          const obj = await callback(gridApi.getSelectedNodes())
-          // console.log('archiveItems.obj:', obj)
-          if (obj.continue) {
-            console.log('continue archiving..')
+  // const archiveItems = (callback) => {
+  //   return new Promise((resolve, reject) => {
+  //     ;(async () => {
+  //       try {
+  //         console.log('archiveItems')
+  //         const obj = await callback(gridApi.getSelectedNodes())
+  //         // console.log('archiveItems.obj:', obj)
+  //         if (obj.continue) {
+  //           console.log('continue archiving..')
 
-            if (confirm('Do you want to archive selected rows?')) {
-              const res = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
-              Promise.all(
-                res.remove.map(async (node) => {
-                  await fetch([props.url, props.tab, 'archive', node.data.id].join('/'), {
-                    method: 'PUT'
-                  })
-                })
-              ).then(resolve, reject)
-            } else reject()
-          } else reject(obj.message)
-        } catch (error) {
-          reject('error: ' + error)
-        }
-      })()
-    })
-  }
+  //           if (confirm('Do you want to archive selected rows?')) {
+  //             const res = gridApi.applyTransaction({ remove: gridApi.getSelectedRows() })
+  //             Promise.all(
+  //               res.remove.map(async (node) => {
+  //                 await fetch([props.url, props.tab, 'archive', node.data.id].join('/'), {
+  //                   method: 'PUT'
+  //                 })
+  //               })
+  //             ).then(resolve, reject)
+  //           } else reject()
+  //         } else reject(obj.message)
+  //       } catch (error) {
+  //         reject('error: ' + error)
+  //       }
+  //     })()
+  //   })
+  // }
 
   const getRowData = async () => {
     console.log('tabContent.getRowData')
