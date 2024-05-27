@@ -11,6 +11,7 @@ import { useValueFormatter } from '@/composables/useValueFormatter'
 import { useValueSetter } from '@/composables/useValueSetter'
 import { useCellEditorParams } from '@/composables/useCellEditorParams'
 import { useDataGridStore } from '@/stores/datagrid'
+import { useMasterDataStore } from '@/stores/masterdata'
 import ToolBar from './ToolBar.vue'
 
 const props = defineProps({
@@ -21,6 +22,7 @@ const props = defineProps({
   editType: String
 })
 const store = useDataGridStore()
+const masterData = useMasterDataStore()
 const columnTypes = ref({
   entryOnAdd: { editable: false }
 })
@@ -32,15 +34,15 @@ const columnDefs = ref(null)
 
 watch(
   () => props.tab,
-  (tab) => {
-    updateColumnDefs(tab)
+  () => {
+    updateColumnDefs()
   }
 )
 
 const doFunction = async (params) => {
   console.log('doFunction')
   params.udf
-    ? await useUDF(toRef(params), props, api, store, itemsToUpdate, dataMode)
+    ? await useUDF({ params, props, api, store, selectedNodes, itemsToUpdate })
         .then(
           (val) =>
             (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
@@ -51,7 +53,6 @@ const doFunction = async (params) => {
           (val) =>
             (params.stay || setTool(params.tool)) && console.log('doFunction.val:', val.value)
         )
-        // .then((val) => console.log('doFunction.val:', val.value))
         .catch((reason) => reason && alert(reason))
 }
 
@@ -62,7 +63,9 @@ const setTool = (val) => {
 }
 
 const updateColumnDefs = () => {
+  console.log('updateColumnDefs')
   getColumnDefs()
+    .then(() => masterData.refresh())
     .then(() => useValueGetter(toRef(columnDefs, 'value'), store))
     .then(() => useValueFormatter(toRef(columnDefs, 'value'), store))
     .then(() => useValueSetter(toRef(columnDefs, 'value'), store))

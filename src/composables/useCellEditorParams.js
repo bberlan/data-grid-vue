@@ -1,6 +1,7 @@
 import { useMasterDataStore } from '@/stores/masterdata'
 
 export function useCellEditorParams(columnDefs) {
+  console.log('useCellEditorParams')
   const masterData = useMasterDataStore()
 
   const setCellEditorParams = async () => {
@@ -13,6 +14,8 @@ export function useCellEditorParams(columnDefs) {
     switch (name) {
       case 'countryCellEditorParams':
         return countryCellEditorParams
+      case 'genderCellEditorParams':
+        return genderCellEditorParams
       default:
         break
     }
@@ -21,6 +24,12 @@ export function useCellEditorParams(columnDefs) {
   const countryCellEditorParams = () => {
     return {
       values: masterData.countries.map((c) => c.codeName)
+    }
+  }
+
+  const genderCellEditorParams = () => {
+    return {
+      values: ['M', 'F']
     }
   }
 

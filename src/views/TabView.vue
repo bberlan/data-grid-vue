@@ -12,12 +12,12 @@ defineProps({
     <div class="nav nav-tabs" id="nav-tab" role="tablist">
       <button
         class="nav-link active"
-        id="nav-lot-tab"
+        id="nav-datagrid-tab"
         data-bs-toggle="tab"
-        data-bs-target="#nav-lot"
+        data-bs-target="#nav-datagrid"
         type="button"
         role="tab"
-        aria-controls="nav-lot"
+        aria-controls="nav-datagrid"
         aria-selected="true"
       >
         {{ tab }}
@@ -27,12 +27,10 @@ defineProps({
   <div class="tab-content" id="nav-tabContent">
     <div
       class="tab-pane fade show active"
-      id="nav-lot"
+      id="nav-datagrid"
       role="tabpanel"
-      aria-labelledby="nav-lot-tab"
+      aria-labelledby="nav-datagrid-tab"
     >
-      <!-- lot tab content... -->
-      <!-- <TabContent tab="lot" :id="id" edit-type="fullRow" /> -->
       <DataGrid :tab :url="env.apiUrl" edit-type="fullRow" />
     </div>
   </div>
