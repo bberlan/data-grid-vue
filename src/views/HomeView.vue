@@ -1,5 +1,14 @@
 <script setup>
+import { onMounted } from 'vue'
+import { useSamplesStore } from '@/stores/samples'
+
+const samples = useSamplesStore()
+
 // import TheWelcome from '../components/TheWelcome.vue'
+onMounted(() => {
+  console.log('HomeView.onMounted')
+  samples.refresh()
+})
 </script>
 
 <template>
