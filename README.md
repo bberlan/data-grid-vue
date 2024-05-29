@@ -37,7 +37,9 @@ and put this request body for data
     "stateCode": "CA",
     "zipCode": 12345,
     "countyCode": "LA",
-    "countryCode": "US"
+    "countryCode": "US",
+    "exists": false,
+    "incorporated": "1903-07-11"
 }
 ```
 
