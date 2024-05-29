@@ -25,6 +25,8 @@ use [POST] http://localhost:5001/generates/:tablename
 where _tablename_ is the filename for your json file to be created in the api data folder:
 
 > _addresses.json_
+>
+> _addresses.template.json_
 
 and put this request body for data
 
