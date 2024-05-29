@@ -1,36 +1,44 @@
-# ag-grid-vue
+# data-grid-vue
 
-This template should help get you started developing with Vue 3 in Vite.
+Customized Data Grid Vue component with CRUD functions for rapid app development using AG Grid.
 
-## Recommended IDE Setup
+## Prerequisite
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### Run data-grid-api
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+```sh
+npm start
+```
 
 ## Project Setup
 
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
+### Run data-grid-vue
 
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+## To generate new sample for demo:
+
+use [POST] http://localhost:5001/generates/:tablename
+
+where _tablename_ is the filename for your json file to be created in the api data folder:
+
+> _addresses.json_
+
+and put this request body for data
 
 ```sh
-npm run build
+{
+    "street": "1234 Street",
+    "city": "Alhambra",
+    "stateCode": "CA",
+    "zipCode": 12345,
+    "countyCode": "LA",
+    "countryCode": "US"
+}
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+click the brand name (upper left corner) to refresh.
 
-```sh
-npm run lint
-```
 # data-grid-vue
