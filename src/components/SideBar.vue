@@ -1,5 +1,8 @@
 <script setup>
-const samples = ['Cars', 'Persons', 'Countries']
+import { useSamplesStore } from '@/stores/samples'
+
+const store = useSamplesStore()
+// const samples = ['Cars', 'Persons', 'Countries']
 // const settings = ['ColumnDefs', 'ToolbarDefs']
 </script>
 
@@ -18,7 +21,7 @@ const samples = ['Cars', 'Persons', 'Countries']
         </button>
         <div class="collapse show" id="samples-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-            <li v-for="sample of samples" :key="sample">
+            <li v-for="sample of store.samples" :key="sample">
               <RouterLink
                 class="link-dark rounded"
                 :to="{ name: 'tab', params: { tab: sample } }"

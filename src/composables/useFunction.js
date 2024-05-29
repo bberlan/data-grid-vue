@@ -128,7 +128,7 @@ export async function useFunction(params) {
         console.log('submitItems')
         switch (store.dataMode) {
           case dataMode.add:
-            console.log('submitItems.add.selectedNodes:', selectedNodes)
+            // console.log('submitItems.add.selectedNodes:', selectedNodes)
             Promise.all(
               selectedNodes.map(
                 async (node) => await transactData({ method: 'POST', data: node.data })
@@ -141,6 +141,7 @@ export async function useFunction(params) {
               .catch((err) => reject(err))
             break
           case dataMode.edit:
+            // console.log('submitItems.edit.items:', items)
             Promise.all(
               items.map(
                 async (item) => await transactData({ method: 'PATCH', data: item, id: item.id })

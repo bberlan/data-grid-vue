@@ -111,14 +111,15 @@ const onCellValueChanged = (params) => {
       break
     case dataMode.edit:
       resetSelectedNodes()
-      // let data = await params.node.data
-      // let index = await itemsToUpdate.findIndex((item) => item.id === data.id)
-      // console.log('onCellValueChanged.foundIndex:', index)
-      // index < 0 ? itemsToUpdate.push(data) : itemsToUpdate.splice(index, 1, data);
       // push edited item cells only for update.
-      if (itemsToUpdate.value.findIndex((item) => item.id === params.node.data.id) < 0)
+      // console.log('onCellValueChanged.params.node.data:', params.node.data)
+      console.log(
+        'itemsToUpdate.value.findIndex((item) => item.id === params.node.id):',
+        itemsToUpdate.value.findIndex((item) => item.id === params.node.id)
+      )
+      if (itemsToUpdate.value.findIndex((item) => item.id === params.node.id) < 0)
         itemsToUpdate.value.push(params.node.data)
-      console.log('onCellValueChanged.itemsToUpdate:', itemsToUpdate.value)
+      // console.log('onCellValueChanged.itemsToUpdate:', itemsToUpdate.value)
       break
     default:
       break
