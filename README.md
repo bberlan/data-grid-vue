@@ -1,6 +1,6 @@
 # data-grid-vue
 
-Customized Data Grid Vue component with CRUD functions for rapid app development using AG Grid.
+Customized Data Grid Vue component using AG Grid with CRUD functions for rapid app development.
 
 ## Prerequisite
 
