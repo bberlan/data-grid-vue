@@ -22,15 +22,16 @@ npm run dev
 
 use [POST] http://localhost:5001/generates/:tablename
 
-where _tablename_ is the filename for your json file to be created in the api data folder:
+where _tablename_ is the filename (e.g. _addresses_) for your json file to be created in the api data folder:
 
 > _addresses.json_
 >
 > _addresses.template.json_
 
-and put this request body for data
+and include your data in the request body:
 
 ```sh
+# sample data
 {
     "street": "1234 Street",
     "city": "Alhambra",
