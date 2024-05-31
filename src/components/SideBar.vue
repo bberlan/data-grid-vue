@@ -3,7 +3,7 @@ import { useSamplesStore } from '@/stores/samples'
 
 const store = useSamplesStore()
 // const samples = ['Cars', 'Persons', 'Countries']
-// const settings = ['ColumnDefs', 'ToolbarDefs']
+// const settings = ['ColumnDefs', 'ToolbarDefs', 'TableDefs']
 </script>
 
 <template>
